@@ -196,38 +196,41 @@ module.exports = function leafletImage(map, callback) {
     }
 
     function handleMarkerLayer(marker, callback) {
+
         var canvas = document.createElement('canvas'),
-            ctx = canvas.getContext('2d'),
-            pixelBounds = map.getPixelBounds(),
-            minPoint = new L.Point(pixelBounds.min.x, pixelBounds.min.y),
-            pixelPoint = map.project(marker.getLatLng()),
-            isBase64 = /^data\:/.test(marker._icon.src),
-            url = isBase64 ? marker._icon.src : addCacheString(marker._icon.src),
-            im = new Image(),
-            options = marker.options.icon.options,
-            size = options.iconSize,
-            pos = pixelPoint.subtract(minPoint),
-            anchor = L.point(options.iconAnchor || size && size.divideBy(2, true));
+        ctx = canvas.getContext('2d'),
+        pixelBounds = map.getPixelBounds(),
+        minPoint = new L.Point(pixelBounds.min.x, pixelBounds.min.y),
+        pixelPoint = map.project(marker.getLatLng()),
+        options = marker.options.icon.options,
+        size = options.iconSize,
+        pos = pixelPoint.subtract(minPoint);
 
         if (size instanceof L.Point) size = [size.x, size.y];
 
-        var x = Math.round(pos.x - size[0] + anchor.x),
-            y = Math.round(pos.y - anchor.y);
+        var x = Math.round(pos.x - size[0] + size[0] / 2),
+            y = Math.round(pos.y - size[1] / 2);
 
         canvas.width = dimensions.x;
         canvas.height = dimensions.y;
-        im.crossOrigin = '';
 
-        im.onload = function () {
-            ctx.drawImage(this, x, y, size[0], size[1]);
-            callback(null, {
-                canvas: canvas
-            });
-        };
+        ctx.beginPath();
+        ctx.arc(x, y, size[0] / 2, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#fa3e3e';
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#fa3e3e';
+        ctx.stroke();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 8px Helvetica';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(options.text, x, y);
 
-        im.src = url;
+        callback(null, {
+            canvas: canvas
+        });
 
-        if (isBase64) im.onload();
     }
     
     function handleEsriDymamicLayer(dynamicLayer, callback) {
